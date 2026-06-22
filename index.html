@@ -1,0 +1,1122 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Ekosistem Laut - IPAS Kelas 5 SD</title>
+    <style>
+        /* ================= CSS VARIABLES & RESET ================= */
+        :root {
+            --primary: #0097e6;
+            --secondary: #00a8ff;
+            --accent: #fbc531;
+            --danger: #e84118;
+            --success: #4cd137;
+            --text-dark: #2f3640;
+            --text-light: #f5f6fa;
+            --bg-light: #e1f5fe;
+            --font-main: 'Segoe UI', 'Nunito', 'Comic Sans MS', sans-serif;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none; /* Prevent text selection for better app feel */
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: var(--font-main);
+            background: linear-gradient(180deg, #81ecec 0%, var(--primary) 100%);
+            color: var(--text-dark);
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* ================= HEADER & CONTROLS ================= */
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 20px;
+            background: rgba(255,255,255,0.2);
+            backdrop-filter: blur(5px);
+            z-index: 100;
+        }
+        
+        .header-title {
+            color: white;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .controls {
+            display: flex;
+            gap: 15px;
+        }
+
+        .control-btn {
+            background: rgba(255,255,255,0.9);
+            border: none;
+            border-radius: 50%;
+            width: 45px;
+            height: 45px;
+            font-size: 20px;
+            cursor: pointer;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            transition: transform 0.2s;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .control-btn:active { transform: scale(0.9); }
+
+        /* ================= MAIN CONTAINER ================= */
+        main {
+            flex: 1;
+            position: relative;
+            overflow-y: auto;
+            overflow-x: hidden;
+            padding: 20px;
+        }
+
+        .screen {
+            display: none;
+            animation: fadeIn 0.5s ease-in-out;
+            max-width: 1000px;
+            margin: 0 auto;
+            height: 100%;
+        }
+
+        .screen.active {
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* ================= ANIMATIONS ================= */
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-15px); } }
+        @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-10px); } 75% { transform: translateX(10px); } }
+        @keyframes pop { 0% { transform: scale(1); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
+
+        /* Background Waves & Bubbles */
+        .waves-container {
+            position: absolute;
+            bottom: 0; left: 0; right: 0;
+            overflow: hidden;
+            line-height: 0;
+            z-index: 0;
+            pointer-events: none;
+        }
+        .waves-container svg { position: relative; display: block; width: calc(100% + 1.3px); height: 100px; }
+        .shape-fill { fill: rgba(255,255,255,0.2); }
+        
+        .bubble {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.4);
+            border-radius: 50%;
+            bottom: -50px;
+            animation: rise linear infinite;
+            pointer-events: none;
+        }
+        @keyframes rise { to { bottom: 120vh; transform: translateX(20px); } }
+
+        /* ================= DEKORASI HALAMAN AWAL ================= */
+        .seaweed-container {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            padding: 0 2%;
+            pointer-events: none;
+            z-index: 1;
+        }
+        .seaweed {
+            font-size: 4rem;
+            transform-origin: bottom center;
+            animation: sway 3s ease-in-out infinite alternate;
+            filter: drop-shadow(0 4px 4px rgba(0,0,0,0.2));
+            opacity: 0.9;
+        }
+        .seaweed:nth-child(even) { animation-duration: 4.5s; animation-direction: alternate-reverse; font-size: 5rem; filter: hue-rotate(30deg); }
+        .seaweed:nth-child(3n) { animation-duration: 3.8s; font-size: 3.5rem; filter: hue-rotate(-20deg); }
+        @keyframes sway { 0% { transform: rotate(-15deg); } 100% { transform: rotate(15deg); } }
+
+        .fish {
+            position: absolute;
+            pointer-events: none;
+            z-index: 2;
+            white-space: nowrap;
+            filter: drop-shadow(2px 2px 3px rgba(0,0,0,0.3));
+        }
+        @keyframes swimLeft { from { transform: translateX(110vw) scaleX(1); } to { transform: translateX(-20vw) scaleX(1); } }
+        @keyframes swimRight { from { transform: translateX(-20vw) scaleX(-1); } to { transform: translateX(110vw) scaleX(-1); } }
+
+        /* ================= BUTTONS & UI ELEMENTS ================= */
+        .btn-main {
+            background: var(--accent);
+            color: var(--text-dark);
+            border: 4px solid white;
+            padding: 15px 30px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            border-radius: 30px;
+            cursor: pointer;
+            box-shadow: 0 6px 0 #e1b12c;
+            transition: all 0.1s;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 10px;
+            text-decoration: none;
+        }
+        .btn-main:active { transform: translateY(6px); box-shadow: 0 0 0 #e1b12c; }
+        
+        .btn-blue { background: var(--secondary); color: white; box-shadow: 0 6px 0 #0097e6; }
+        .btn-blue:active { box-shadow: 0 0 0 #0097e6; }
+        
+        .btn-green { background: var(--success); color: white; box-shadow: 0 6px 0 #44bd32; border-color: white;}
+        .btn-green:active { box-shadow: 0 0 0 #44bd32; }
+
+        .btn-red { background: var(--danger); color: white; box-shadow: 0 6px 0 #c23616; border-color: white;}
+        .btn-red:active { box-shadow: 0 0 0 #c23616; }
+
+        .card {
+            background: rgba(255,255,255,0.95);
+            border-radius: 20px;
+            padding: 25px;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.15);
+            border: 5px solid white;
+            position: relative;
+            z-index: 10;
+        }
+
+        /* ================= DASHBOARD ================= */
+        .dashboard-layout {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            height: 100%;
+            z-index: 10;
+        }
+        .hero-title { font-size: 3rem; color: white; text-shadow: 3px 3px 0 var(--primary); margin-bottom: 10px; animation: float 3s ease-in-out infinite; }
+        .hero-subtitle { font-size: 1.5rem; color: var(--accent); background: var(--text-dark); padding: 5px 20px; border-radius: 20px; margin-bottom: 40px; }
+        .menu-grid { display: flex; flex-wrap: wrap; justify-content: center; gap: 20px; }
+
+        /* ================= MATERI (AYO BELAJAR) ================= */
+        .materi-container { flex: 1; display: flex; flex-direction: column; }
+        .slide { display: none; flex: 1; overflow-y: auto; }
+        .slide.active { display: block; }
+        .slide-nav { display: flex; justify-content: space-between; margin-top: 20px; }
+        
+        .grid-2col { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 15px;}
+        .list-item { background: var(--bg-light); padding: 10px; border-radius: 10px; margin-bottom: 10px; display: flex; align-items: center; gap: 10px; font-weight: bold; border-left: 5px solid var(--primary);}
+        .emoji-icon { font-size: 1.5rem; }
+        
+        .rantai-makanan-visual { display: flex; align-items: center; justify-content: center; gap: 15px; flex-wrap: wrap; margin: 30px 0; }
+        .rantai-item { text-align: center; }
+        .rantai-box { width: 80px; height: 80px; background: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 2.5rem; box-shadow: 0 5px 10px rgba(0,0,0,0.1); border: 4px solid var(--primary); animation: float 3s ease-in-out infinite alternate;}
+        .arrow { font-size: 2rem; color: var(--primary); }
+
+        /* ================= FORM LOGIN ================= */
+        .form-group { margin-bottom: 20px; text-align: left; }
+        .form-group label { display: block; font-weight: bold; margin-bottom: 5px; color: var(--primary); }
+        .form-control { width: 100%; padding: 15px; border: 3px solid var(--bg-light); border-radius: 10px; font-size: 1.1rem; font-family: inherit; }
+        .form-control:focus { outline: none; border-color: var(--primary); }
+
+        /* ================= GAMES ================= */
+        .game-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; background: white; padding: 10px 20px; border-radius: 15px; box-shadow: 0 4px 0 rgba(0,0,0,0.1); }
+        .score-display { font-size: 1.5rem; font-weight: bold; color: var(--success); }
+        
+        /* Game 1: Matching */
+        .matching-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; }
+        .match-col { display: flex; flex-direction: column; gap: 15px; }
+        .match-btn { background: white; border: 3px solid var(--primary); border-radius: 10px; padding: 15px; font-size: 1.2rem; font-weight: bold; cursor: pointer; transition: 0.2s; text-align: center;}
+        .match-btn.selected { background: var(--accent); border-color: var(--text-dark); transform: scale(1.05); }
+        .match-btn.correct { background: var(--success); border-color: white; color: white; pointer-events: none; }
+        .match-btn.wrong { animation: shake 0.5s; background: var(--danger); color: white; }
+
+        /* Game 2: Drag & Drop */
+        .dnd-container { display: flex; flex-direction: column; gap: 20px; height: 100%; }
+        .dropzones { display: flex; gap: 20px; justify-content: center; margin-bottom: 20px; flex-wrap: wrap; }
+        .dropzone { flex: 1; min-width: 140px; min-height: 200px; background: var(--bg-light); border: 3px dashed var(--primary); border-radius: 15px; padding: 10px; text-align: center; transition: 0.2s; }
+        .dropzone h3 { margin-bottom: 10px; color: var(--primary); border-bottom: 2px solid var(--primary); padding-bottom: 5px;}
+        .dropzone.hover { background: #c8e6c9; border-color: var(--success); }
+        
+        .draggable-items { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; background: white; padding: 20px; border-radius: 15px; min-height: 80px;}
+        .draggable { background: var(--accent); padding: 10px 20px; border-radius: 20px; font-weight: bold; cursor: grab; box-shadow: 0 4px 0 #e1b12c; user-select: none; z-index: 50; display: inline-flex; align-items: center; gap: 5px; }
+        .draggable:active { cursor: grabbing; box-shadow: none; transform: translateY(4px); }
+        
+        .order-dropzones { display: flex; gap: 10px; justify-content: center; align-items: center; flex-wrap: wrap; margin-top: 20px;}
+        .order-slot { width: 100px; height: 50px; background: rgba(255,255,255,0.5); border: 3px dashed white; border-radius: 10px; display: flex; justify-content: center; align-items: center;}
+        
+        /* ================= SCORE TABLE ================= */
+        .score-table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        .score-table th, .score-table td { padding: 12px; text-align: left; border-bottom: 2px solid var(--bg-light); }
+        .score-table th { background: var(--primary); color: white; }
+        .score-table tr:nth-child(even) { background: #f8f9fa; }
+
+        /* ================= DEVELOPER ================= */
+        .dev-profile { text-align: center; }
+        .avatar { width: 120px; height: 120px; background: var(--primary); border-radius: 50%; margin: 0 auto 20px; display: flex; justify-content: center; align-items: center; font-size: 4rem; border: 5px solid white; box-shadow: 0 5px 15px rgba(0,0,0,0.2);}
+
+        /* Footer */
+        footer { text-align: center; padding: 10px; color: white; font-size: 0.9rem; z-index: 100; position: relative; background: rgba(0,0,0,0.2); }
+
+        /* ================= RESPONSIVE ================= */
+        @media (max-width: 768px) {
+            .hero-title { font-size: 2.2rem; }
+            .grid-2col { grid-template-columns: 1fr; }
+            .rantai-makanan-visual { flex-direction: column; }
+            .arrow { transform: rotate(90deg); }
+        }
+        @media (max-width: 480px) {
+            .hero-title { font-size: 1.8rem; }
+            .btn-main { padding: 12px 20px; font-size: 1rem; width: 100%; justify-content: center;}
+            .menu-grid { flex-direction: column; width: 100%; padding: 0 20px;}
+            .card { padding: 15px; }
+            .matching-grid { gap: 10px; }
+            .match-btn { padding: 10px; font-size: 1rem; }
+            .draggable { font-size: 0.9rem; padding: 8px 15px; }
+            .dropzone { min-width: 120px; }
+            .order-slot { width: 80px; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Bubbles Animation Container -->
+    <div id="bubbles"></div>
+
+    <header>
+        <div class="header-title">
+            <span style="font-size: 1.5rem;">🐠</span>
+            <strong id="header-text" style="display:none;">Ekosistem Laut</strong>
+        </div>
+        <div class="controls">
+            <button class="control-btn" id="btnAudio" onclick="toggleAudio()" title="Suara ON/OFF">🔊</button>
+            <button class="control-btn" id="btnFullscreen" onclick="toggleFullscreen()" title="Layar Penuh">🔲</button>
+        </div>
+    </header>
+
+    <main>
+        <!-- SCREEN: DASHBOARD -->
+        <div id="screen-home" class="screen active">
+            
+            <!-- Dekorasi Khusus Halaman Awal -->
+            <div id="fishes"></div>
+            <div class="seaweed-container">
+                <div class="seaweed">🌿</div>
+                <div class="seaweed">🌿</div>
+                <div class="seaweed">🌿</div>
+                <div class="seaweed">🌿</div>
+                <div class="seaweed">🌿</div>
+                <div class="seaweed">🌿</div>
+                <div class="seaweed">🌿</div>
+                <div class="seaweed">🌿</div>
+            </div>
+
+            <div class="dashboard-layout">
+                <h1 class="hero-title">Ekosistem Laut</h1>
+                <div class="hero-subtitle">Media Pembelajaran IPAS Kelas 5 SD</div>
+                
+                <div class="menu-grid">
+                    <button class="btn-main btn-blue" onclick="navTo('screen-learn')">📖 Ayo Belajar</button>
+                    <button class="btn-main" onclick="navTo('screen-login')">🎮 Ayo Bermain</button>
+                    <button class="btn-main btn-green" onclick="navTo('screen-score')">🏆 Papan Skor</button>
+                    <button class="btn-main btn-red" onclick="navTo('screen-dev')">👩‍🏫 Pengembang</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- SCREEN: AYO BELAJAR -->
+        <div id="screen-learn" class="screen">
+            <div class="card materi-container">
+                <h2 style="color: var(--primary); text-align: center; border-bottom: 2px dashed var(--bg-light); padding-bottom: 10px;">Ayo Belajar!</h2>
+                
+                <!-- Materi 1 -->
+                <div class="slide active" id="slide-1">
+                    <h3>1. Komponen Ekosistem Laut</h3>
+                    <p style="margin: 10px 0;">Ekosistem laut terdiri dari makhluk hidup dan benda tak hidup yang saling berinteraksi.</p>
+                    <div class="grid-2col">
+                        <div>
+                            <h4 style="color: var(--success);">Komponen Biotik (Hidup)</h4>
+                            <div class="list-item"><span class="emoji-icon">🐟</span> Ikan</div>
+                            <div class="list-item"><span class="emoji-icon">🌿</span> Rumput Laut & Terumbu Karang</div>
+                            <div class="list-item"><span class="emoji-icon">🦠</span> Plankton</div>
+                            <div class="list-item"><span class="emoji-icon">🐢</span> Penyu & Paus</div>
+                        </div>
+                        <div>
+                            <h4 style="color: var(--danger);">Komponen Abiotik (Tak Hidup)</h4>
+                            <div class="list-item"><span class="emoji-icon">💧</span> Air Laut & Arus</div>
+                            <div class="list-item"><span class="emoji-icon">☀️</span> Cahaya Matahari & Suhu</div>
+                            <div class="list-item"><span class="emoji-icon">🧂</span> Garam Laut</div>
+                            <div class="list-item"><span class="emoji-icon">🏖️</span> Pasir & Batu Karang</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Materi 2 -->
+                <div class="slide" id="slide-2">
+                    <h3>2. Rantai Makanan di Laut</h3>
+                    <p style="margin: 10px 0;">Proses makan dan dimakan antar makhluk hidup. Produsen membuat makanan, Konsumen memakan, dan Pengurai menguraikan yang mati.</p>
+                    
+                    <div class="rantai-makanan-visual">
+                        <div class="rantai-item">
+                            <div class="rantai-box">🦠</div>
+                            <b>Plankton</b><br><small>Produsen</small>
+                        </div>
+                        <div class="arrow">➡️</div>
+                        <div class="rantai-item">
+                            <div class="rantai-box">🦐</div>
+                            <b>Ikan Kecil</b><br><small>Konsumen I</small>
+                        </div>
+                        <div class="arrow">➡️</div>
+                        <div class="rantai-item">
+                            <div class="rantai-box">🐟</div>
+                            <b>Ikan Besar</b><br><small>Konsumen II</small>
+                        </div>
+                        <div class="arrow">➡️</div>
+                        <div class="rantai-item">
+                            <div class="rantai-box">🦈</div>
+                            <b>Hiu</b><br><small>Puncak / Predator</small>
+                        </div>
+                    </div>
+                    <button class="btn-main btn-blue" style="margin: 0 auto;" onclick="playSound('win')">🌟 Simulasikan (Animasi Suara)</button>
+                </div>
+
+                <!-- Materi 3 -->
+                <div class="slide" id="slide-3">
+                    <h3>3. Manfaat Ekosistem Laut</h3>
+                    <div style="margin-top: 15px;">
+                        <div class="list-item"><span class="emoji-icon">🍽️</span> <b>Sumber Makanan:</b> Menyediakan ikan, udang, dan rumput laut yang bergizi.</div>
+                        <div class="list-item"><span class="emoji-icon">🏠</span> <b>Tempat Hidup:</b> Habitat bagi jutaan spesies makhluk laut.</div>
+                        <div class="list-item"><span class="emoji-icon">🎣</span> <b>Mata Pencaharian:</b> Tempat nelayan mencari ikan untuk ekonomi keluarga.</div>
+                        <div class="list-item"><span class="emoji-icon">💨</span> <b>Penghasil Oksigen:</b> Fitoplankton di laut menghasilkan sebagian besar oksigen bumi!</div>
+                        <div class="list-item"><span class="emoji-icon">🏖️</span> <b>Objek Wisata:</b> Keindahan terumbu karang menarik wisatawan.</div>
+                    </div>
+                </div>
+
+                <!-- Navigasi Slide -->
+                <div class="slide-nav">
+                    <button class="btn-main btn-red" onclick="navTo('screen-home')" style="margin:0;">🏠 Kembali</button>
+                    <div>
+                        <button class="btn-main btn-blue" style="display:inline-block; margin:0;" onclick="changeSlide(-1)">⬅️</button>
+                        <span id="slide-indicator" style="font-weight:bold; margin: 0 10px;">1/3</span>
+                        <button class="btn-main btn-blue" style="display:inline-block; margin:0;" onclick="changeSlide(1)">➡️</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SCREEN: LOGIN GAME -->
+        <div id="screen-login" class="screen">
+            <div class="card" style="max-width: 400px; margin: auto; width: 100%;">
+                <h2 style="text-align: center; color: var(--primary); margin-bottom: 20px;">Masuk Area Bermain</h2>
+                <div class="form-group">
+                    <label>Nama Siswa</label>
+                    <input type="text" id="inputNama" class="form-control" placeholder="Contoh: Budi" autocomplete="off">
+                </div>
+                <div class="form-group">
+                    <label>Nama Sekolah</label>
+                    <input type="text" id="inputSekolah" class="form-control" placeholder="Contoh: SDN 09" autocomplete="off">
+                </div>
+                <button class="btn-main" style="width: 100%; justify-content: center;" onclick="doLogin()">🚀 Mulai Bermain</button>
+                <button class="btn-main btn-red" style="width: 100%; justify-content: center;" onclick="navTo('screen-home')">🏠 Batal</button>
+            </div>
+        </div>
+
+        <!-- SCREEN: GAME MENU -->
+        <div id="screen-gamemenu" class="screen">
+            <div class="dashboard-layout">
+                <h2 style="color: white; margin-bottom: 20px;">Pilih Permainan, <span id="displayPlayerName">Siswa</span>!</h2>
+                <button class="btn-main btn-blue" onclick="startGame(1)">🧩 Game 1: Mencocokkan Pasangan</button>
+                <button class="btn-main btn-green" onclick="startGame(2)">🖐️ Game 2: Drag & Drop (Kelompokkan)</button>
+                <button class="btn-main btn-red" onclick="navTo('screen-home')">🏠 Kembali ke Beranda</button>
+            </div>
+        </div>
+
+        <!-- SCREEN: GAME 1 (MATCHING) -->
+        <div id="screen-game1" class="screen">
+            <div class="card">
+                <div class="game-header">
+                    <h3>Game 1: Cocokkan Pasangan!</h3>
+                    <div class="score-display">Skor: <span id="score1">0</span></div>
+                </div>
+                <p style="text-align: center; margin-bottom: 15px;">Klik kotak di sebelah kiri, lalu klik pasangannya di sebelah kanan!</p>
+                
+                <div class="matching-grid">
+                    <div class="match-col" id="match-left">
+                        <!-- Diisi via JS -->
+                    </div>
+                    <div class="match-col" id="match-right">
+                        <!-- Diisi via JS -->
+                    </div>
+                </div>
+                <div style="text-align: center; margin-top: 20px;">
+                    <button class="btn-main btn-red" style="display:inline-flex;" onclick="navTo('screen-gamemenu')">Keluar Game</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- SCREEN: GAME 2 (DRAG & DROP) -->
+        <div id="screen-game2" class="screen">
+            <div class="card dnd-container">
+                <div class="game-header">
+                    <h3>Game 2: Kelompokkan!</h3>
+                    <div class="score-display">Skor: <span id="score2">0</span></div>
+                </div>
+                <p style="text-align: center; margin-bottom: 10px;">Seret (Drag) benda di bawah ini ke kotak yang tepat!</p>
+                
+                <div class="dropzones">
+                    <div class="dropzone" id="dz-biotik" data-accept="biotik">
+                        <h3>🌿 Biotik (Hidup)</h3>
+                    </div>
+                    <div class="dropzone" id="dz-abiotik" data-accept="abiotik">
+                        <h3>💧 Abiotik (Tak Hidup)</h3>
+                    </div>
+                </div>
+
+                <div class="draggable-items" id="drag-source">
+                    <!-- Diisi via JS -->
+                </div>
+                
+                <div id="game2-part2" style="display:none; margin-top: 20px; text-align: center; border-top: 2px dashed #ccc; padding-top:20px;">
+                    <h3 style="color:var(--primary);">Hebat! Sekarang susun rantai makanan:</h3>
+                    <div class="order-dropzones" id="order-dzs">
+                        <div class="dropzone order-slot" data-order="1"></div>➡️
+                        <div class="dropzone order-slot" data-order="2"></div>➡️
+                        <div class="dropzone order-slot" data-order="3"></div>➡️
+                        <div class="dropzone order-slot" data-order="4"></div>
+                    </div>
+                    <div class="draggable-items" id="order-source" style="margin-top: 15px;">
+                         <!-- Diisi via JS -->
+                    </div>
+                </div>
+
+                <div style="text-align: center; margin-top: 10px;">
+                    <button class="btn-main btn-red" style="display:inline-flex;" onclick="navTo('screen-gamemenu')">Keluar Game</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- SCREEN: SCORE -->
+        <div id="screen-score" class="screen">
+            <div class="card" style="height: 100%; display: flex; flex-direction: column;">
+                <h2 style="color: var(--primary); text-align: center;">🏆 Papan Skor Tertinggi</h2>
+                <div style="flex: 1; overflow-y: auto;">
+                    <table class="score-table">
+                        <thead>
+                            <tr>
+                                <th>No</th>
+                                <th>Nama</th>
+                                <th>Sekolah</th>
+                                <th>Skor</th>
+                                <th>Tanggal</th>
+                            </tr>
+                        </thead>
+                        <tbody id="score-tbody">
+                            <!-- Diisi JS -->
+                        </tbody>
+                    </table>
+                </div>
+                <div style="display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; margin-top: 15px;">
+                    <button class="btn-main btn-red" onclick="resetScores()">🗑️ Hapus Data</button>
+                    <button class="btn-main" onclick="navTo('screen-home')">🏠 Kembali</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- SCREEN: PENGEMBANG -->
+        <div id="screen-dev" class="screen">
+            <div class="card dev-profile" style="max-width: 500px; margin: auto;">
+                <div class="avatar">👩‍🏫</div>
+                <h2 style="color: var(--primary); margin-bottom: 5px;">Bu Roza Naulia</h2>
+                <h4 style="color: gray; margin-bottom: 20px;">Guru SD | SDN 09 V Koto Kampung Dalam</h4>
+                
+                <table style="width: 100%; text-align: left; margin-bottom: 20px; border-collapse: collapse;">
+                    <tr style="border-bottom: 1px solid #eee;"><td style="padding: 10px 0;"><b>Aplikasi</b></td><td>Media Pembelajaran Interaktif IPAS Kelas 5 SD</td></tr>
+                    <tr style="border-bottom: 1px solid #eee;"><td style="padding: 10px 0;"><b>Materi</b></td><td>Ekosistem Laut</td></tr>
+                    <tr style="border-bottom: 1px solid #eee;"><td style="padding: 10px 0;"><b>Tahun</b></td><td>2026</td></tr>
+                </table>
+                
+                <p style="font-style: italic; color: var(--success); font-weight: bold; margin-bottom: 20px;">"Belajar alam itu menyenangkan. Teruslah bersemangat menjelajahi lautan ilmu!"</p>
+                
+                <button class="btn-main btn-blue" style="margin: auto;" onclick="navTo('screen-home')">🏠 Kembali ke Beranda</button>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Ombak Bawah -->
+    <div class="waves-container">
+        <svg data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 120" preserveAspectRatio="none">
+            <path d="M321.39,56.44c58-10.79,114.16-30.13,172-41.86,82.39-16.72,168.19-17.73,250.45-.39C823.78,31,906.67,72,985.66,92.83c70.05,18.48,146.53,26.09,214.34,3V0H0V27.35A600.21,600.21,0,0,0,321.39,56.44Z" class="shape-fill"></path>
+        </svg>
+    </div>
+
+    <footer>
+        &copy; 2026 Media Pembelajaran Interaktif Ekosistem Laut | SDN 09 V Koto Kampung Dalam
+    </footer>
+
+    <!-- JAVASCRIPT LOGIC -->
+    <script>
+        /* ================= STATE & GLOBALS ================= */
+        let currentScreen = 'screen-home';
+        let isAudioOn = false;
+        let audioCtx = null;
+        let sessionUser = { nama: '', sekolah: '' };
+        let currentGameScore = 0;
+        let slideIndex = 1;
+
+        // Inisialisasi gelembung latar belakang
+        function createBubbles() {
+            const container = document.getElementById('bubbles');
+            for(let i=0; i<15; i++) {
+                let b = document.createElement('div');
+                b.className = 'bubble';
+                b.style.left = Math.random() * 100 + 'vw';
+                b.style.width = Math.random() * 30 + 10 + 'px';
+                b.style.height = b.style.width;
+                b.style.animationDuration = Math.random() * 5 + 5 + 's';
+                b.style.animationDelay = Math.random() * 5 + 's';
+                container.appendChild(b);
+            }
+        }
+        createBubbles();
+
+        // Inisialisasi Ikan Berenang di Halaman Awal
+        function createFishes() {
+            const container = document.getElementById('fishes');
+            if(!container) return;
+            
+            const fishEmojis = ['🐟', '🐠', '🐡', '🦈', '🐢'];
+            for(let i=0; i<15; i++) {
+                let f = document.createElement('div');
+                f.className = 'fish';
+                f.innerText = fishEmojis[Math.floor(Math.random() * fishEmojis.length)];
+                
+                // Ukuran random (1.5rem - 3.5rem)
+                f.style.fontSize = (Math.random() * 2 + 1.5) + 'rem';
+                
+                // Posisi vertikal random (5% - 80% tinggi layar)
+                f.style.top = (Math.random() * 75 + 5) + 'vh'; 
+                
+                // Kecepatan animasi random (15s - 35s)
+                f.style.animationDuration = (Math.random() * 20 + 15) + 's'; 
+                
+                // Delay negatif agar beberapa ikan sudah ada di tengah layar saat dimuat
+                f.style.animationDelay = (Math.random() * -30) + 's'; 
+                
+                // Arah acak (Kiri atau Kanan)
+                if(Math.random() > 0.5) {
+                    f.style.animationName = 'swimRight';
+                } else {
+                    f.style.animationName = 'swimLeft';
+                }
+                
+                container.appendChild(f);
+            }
+        }
+        createFishes();
+
+        /* ================= AUDIO SYSTEM (WEB AUDIO API) ================= */
+        // Menghasilkan suara tanpa file eksternal
+        function initAudio() {
+            if(!audioCtx) {
+                const AudioContext = window.AudioContext || window.webkitAudioContext;
+                audioCtx = new AudioContext();
+            }
+            if(audioCtx.state === 'suspended') audioCtx.resume();
+        }
+
+        function playSound(type) {
+            if(!isAudioOn) return;
+            initAudio();
+            const osc = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            osc.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+
+            const now = audioCtx.currentTime;
+            
+            if(type === 'click') {
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(600, now);
+                osc.frequency.exponentialRampToValueAtTime(800, now + 0.1);
+                gainNode.gain.setValueAtTime(0.3, now);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
+                osc.start(now); osc.stop(now + 0.1);
+            } 
+            else if(type === 'correct') {
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(400, now);
+                osc.frequency.setValueAtTime(600, now + 0.1);
+                osc.frequency.setValueAtTime(800, now + 0.2);
+                gainNode.gain.setValueAtTime(0.2, now);
+                gainNode.gain.linearRampToValueAtTime(0, now + 0.3);
+                osc.start(now); osc.stop(now + 0.3);
+            }
+            else if(type === 'wrong') {
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(200, now);
+                osc.frequency.exponentialRampToValueAtTime(100, now + 0.3);
+                gainNode.gain.setValueAtTime(0.2, now);
+                gainNode.gain.linearRampToValueAtTime(0, now + 0.3);
+                osc.start(now); osc.stop(now + 0.3);
+            }
+            else if(type === 'win') {
+                osc.type = 'square';
+                osc.frequency.setValueAtTime(440, now);
+                osc.frequency.setValueAtTime(554, now + 0.15);
+                osc.frequency.setValueAtTime(659, now + 0.3);
+                osc.frequency.setValueAtTime(880, now + 0.45);
+                gainNode.gain.setValueAtTime(0.1, now);
+                gainNode.gain.linearRampToValueAtTime(0, now + 0.6);
+                osc.start(now); osc.stop(now + 0.6);
+            }
+        }
+
+        function toggleAudio() {
+            isAudioOn = !isAudioOn;
+            document.getElementById('btnAudio').innerHTML = isAudioOn ? '🔊' : '🔇';
+            if(isAudioOn) { initAudio(); playSound('click'); }
+        }
+
+        /* ================= NAVIGATION ================= */
+        function navTo(screenId) {
+            playSound('click');
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById(screenId).classList.add('active');
+            currentScreen = screenId;
+            document.getElementById('header-text').style.display = (screenId === 'screen-home') ? 'none' : 'inline';
+            
+            if(screenId === 'screen-score') renderScores();
+        }
+
+        function toggleFullscreen() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen().catch(err => {
+                    alert(`Error: ${err.message}`);
+                });
+            } else {
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                }
+            }
+        }
+        document.addEventListener('fullscreenchange', () => {
+            document.getElementById('btnFullscreen').innerHTML = document.fullscreenElement ? '🔽' : '🔲';
+        });
+
+        /* ================= BELAJAR SLIDES ================= */
+        function changeSlide(n) {
+            playSound('click');
+            let slides = document.querySelectorAll('.slide');
+            slides[slideIndex-1].classList.remove('active');
+            slideIndex += n;
+            if(slideIndex > slides.length) slideIndex = 1;
+            if(slideIndex < 1) slideIndex = slides.length;
+            slides[slideIndex-1].classList.add('active');
+            document.getElementById('slide-indicator').innerText = `${slideIndex}/${slides.length}`;
+        }
+
+        /* ================= LOGIN ================= */
+        function doLogin() {
+            const nama = document.getElementById('inputNama').value.trim();
+            const sekolah = document.getElementById('inputSekolah').value.trim();
+            
+            if(!nama || !sekolah) {
+                playSound('wrong');
+                alert("Harap isi Nama dan Sekolah terlebih dahulu!");
+                return;
+            }
+            
+            sessionUser = { nama, sekolah };
+            document.getElementById('displayPlayerName').innerText = nama;
+            playSound('correct');
+            navTo('screen-gamemenu');
+        }
+
+        /* ================= SCORE STORAGE ================= */
+        function saveScore(gameName) {
+            const scores = JSON.parse(localStorage.getItem('ekosistemScores')) || [];
+            scores.push({
+                nama: sessionUser.nama,
+                sekolah: sessionUser.sekolah,
+                skor: currentGameScore,
+                game: gameName,
+                tanggal: new Date().toLocaleDateString('id-ID')
+            });
+            // Urutkan berdasarkan skor tertinggi
+            scores.sort((a, b) => b.skor - a.skor);
+            localStorage.setItem('ekosistemScores', JSON.stringify(scores));
+        }
+
+        function renderScores() {
+            const scores = JSON.parse(localStorage.getItem('ekosistemScores')) || [];
+            const tbody = document.getElementById('score-tbody');
+            tbody.innerHTML = '';
+            
+            if(scores.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">Belum ada data skor.</td></tr>';
+                return;
+            }
+
+            scores.forEach((s, idx) => {
+                let tr = `<tr>
+                    <td>${idx + 1}</td>
+                    <td><b>${s.nama}</b><br><small style="color:gray;">${s.game}</small></td>
+                    <td>${s.sekolah}</td>
+                    <td style="color:var(--success); font-weight:bold;">${s.skor}</td>
+                    <td>${s.tanggal}</td>
+                </tr>`;
+                tbody.innerHTML += tr;
+            });
+        }
+
+        function resetScores() {
+            if(confirm("Apakah Anda yakin ingin menghapus semua data skor?")) {
+                localStorage.removeItem('ekosistemScores');
+                renderScores();
+                playSound('click');
+            }
+        }
+
+        /* ================= GAMES ================= */
+        function startGame(num) {
+            currentGameScore = 0;
+            if(num === 1) initGame1();
+            if(num === 2) initGame2();
+        }
+
+        function updateScoreDisplay(id, pts) {
+            currentGameScore += pts;
+            const el = document.getElementById(id);
+            el.innerText = currentGameScore;
+            el.style.animation = 'none';
+            setTimeout(() => el.style.animation = 'pop 0.3s', 10);
+        }
+
+        // --- GAME 1: MATCHING ---
+        const g1Pairs = [
+            { id: 'p1', left: 'Produsen', right: 'Rumput Laut' },
+            { id: 'p2', left: 'Konsumen', right: 'Ikan' },
+            { id: 'p3', left: 'Abiotik', right: 'Air Laut' },
+            { id: 'p4', left: 'Predator', right: 'Hiu' },
+            { id: 'p5', left: 'Pengurai', right: 'Bakteri' }
+        ];
+
+        let g1SelectedLeft = null;
+        let g1SelectedRight = null;
+        let g1MatchedCount = 0;
+
+        function initGame1() {
+            navTo('screen-game1');
+            document.getElementById('score1').innerText = "0";
+            g1MatchedCount = 0;
+            g1SelectedLeft = null; g1SelectedRight = null;
+
+            const leftCol = document.getElementById('match-left');
+            const rightCol = document.getElementById('match-right');
+            leftCol.innerHTML = ''; rightCol.innerHTML = '';
+
+            // Acak urutan
+            let leftArr = [...g1Pairs].sort(() => Math.random() - 0.5);
+            let rightArr = [...g1Pairs].sort(() => Math.random() - 0.5);
+
+            leftArr.forEach(item => {
+                let btn = document.createElement('button');
+                btn.className = 'match-btn left-btn';
+                btn.innerText = item.left;
+                btn.dataset.id = item.id;
+                btn.onclick = () => selectMatch('left', btn);
+                leftCol.appendChild(btn);
+            });
+
+            rightArr.forEach(item => {
+                let btn = document.createElement('button');
+                btn.className = 'match-btn right-btn';
+                btn.innerText = item.right;
+                btn.dataset.id = item.id;
+                btn.onclick = () => selectMatch('right', btn);
+                rightCol.appendChild(btn);
+            });
+        }
+
+        function selectMatch(side, btn) {
+            if(btn.classList.contains('correct')) return;
+            playSound('click');
+
+            document.querySelectorAll(`.${side}-btn`).forEach(b => {
+                if(!b.classList.contains('correct')) b.classList.remove('selected');
+            });
+            
+            btn.classList.add('selected');
+
+            if(side === 'left') g1SelectedLeft = btn;
+            else g1SelectedRight = btn;
+
+            if(g1SelectedLeft && g1SelectedRight) checkMatch();
+        }
+
+        function checkMatch() {
+            const idLeft = g1SelectedLeft.dataset.id;
+            const idRight = g1SelectedRight.dataset.id;
+
+            if(idLeft === idRight) {
+                // Benar
+                playSound('correct');
+                g1SelectedLeft.className = 'match-btn correct';
+                g1SelectedRight.className = 'match-btn correct';
+                updateScoreDisplay('score1', 10);
+                g1MatchedCount++;
+                
+                if(g1MatchedCount === g1Pairs.length) {
+                    setTimeout(() => {
+                        playSound('win');
+                        alert(`Hebat! Kamu menyelesaikan Game 1 dengan skor ${currentGameScore}!`);
+                        saveScore('Game 1: Cocokkan');
+                        navTo('screen-score');
+                    }, 500);
+                }
+            } else {
+                // Salah
+                playSound('wrong');
+                g1SelectedLeft.classList.add('wrong');
+                g1SelectedRight.classList.add('wrong');
+                
+                let tempL = g1SelectedLeft, tempR = g1SelectedRight;
+                setTimeout(() => {
+                    tempL.classList.remove('wrong', 'selected');
+                    tempR.classList.remove('wrong', 'selected');
+                }, 500);
+            }
+            g1SelectedLeft = null;
+            g1SelectedRight = null;
+        }
+
+        // --- GAME 2: DRAG AND DROP ---
+        // Custom Drag & Drop Implementation for Mobile & Desktop compatibility
+        const g2Items = [
+            { text: '🐟 Ikan', type: 'biotik' },
+            { text: '💧 Air Laut', type: 'abiotik' },
+            { text: '🌿 Terumbu Karang', type: 'biotik' },
+            { text: '☀️ Cahaya', type: 'abiotik' },
+            { text: '🐢 Penyu', type: 'biotik' },
+            { text: '🏖️ Pasir', type: 'abiotik' }
+        ];
+
+        const g2OrderItems = [
+            { id: 1, text: '🦠 Plankton' },
+            { id: 4, text: '🦈 Hiu' },
+            { id: 2, text: '🦐 Ikan Kecil' },
+            { id: 3, text: '🐟 Ikan Besar' }
+        ];
+
+        let g2SortCount = 0;
+        let g2OrderCount = 0;
+
+        function initGame2() {
+            navTo('screen-game2');
+            document.getElementById('score2').innerText = "0";
+            document.getElementById('game2-part2').style.display = 'none';
+            g2SortCount = 0;
+            g2OrderCount = 0;
+
+            const source = document.getElementById('drag-source');
+            source.innerHTML = '';
+            
+            // Setup part 1
+            [...g2Items].sort(() => Math.random() - 0.5).forEach((item, index) => {
+                let el = document.createElement('div');
+                el.className = 'draggable';
+                el.innerText = item.text;
+                el.dataset.type = item.type;
+                el.id = 'g2-item-' + index;
+                makeDraggable(el, checkSortDrop);
+                source.appendChild(el);
+            });
+        }
+
+        // Logika drag sentuh/mouse universal
+        function makeDraggable(el, dropCallback) {
+            let startX, startY, origX, origY, isDragging = false;
+            let clone = null;
+
+            function down(e) {
+                if(e.type === 'touchstart') e.preventDefault(); // cegah scroll
+                isDragging = true;
+                playSound('click');
+                const touch = e.touches ? e.touches[0] : e;
+                const rect = el.getBoundingClientRect();
+                
+                // Buat clone transparan untuk tetap mempertahankan layout
+                clone = el.cloneNode(true);
+                clone.style.opacity = '0';
+                el.parentNode.insertBefore(clone, el);
+
+                el.style.position = 'fixed';
+                el.style.zIndex = '1000';
+                el.style.width = rect.width + 'px';
+                
+                startX = touch.clientX;
+                startY = touch.clientY;
+                origX = rect.left;
+                origY = rect.top;
+                
+                moveEl(origX, origY);
+
+                document.addEventListener('mousemove', move);
+                document.addEventListener('touchmove', move, {passive: false});
+                document.addEventListener('mouseup', up);
+                document.addEventListener('touchend', up);
+            }
+
+            function move(e) {
+                if(!isDragging) return;
+                e.preventDefault();
+                const touch = e.touches ? e.touches[0] : e;
+                const dx = touch.clientX - startX;
+                const dy = touch.clientY - startY;
+                moveEl(origX + dx, origY + dy);
+            }
+
+            function up(e) {
+                if(!isDragging) return;
+                isDragging = false;
+                document.removeEventListener('mousemove', move);
+                document.removeEventListener('touchmove', move);
+                document.removeEventListener('mouseup', up);
+                document.removeEventListener('touchend', up);
+
+                // Cek Dropzone via coordinates
+                el.style.display = 'none'; // Sembunyikan sementara untuk cek elemen di bawahnya
+                const touch = e.changedTouches ? e.changedTouches[0] : e;
+                const dropTarget = document.elementFromPoint(touch.clientX, touch.clientY);
+                el.style.display = 'inline-flex';
+
+                let validDrop = false;
+                if(dropTarget) {
+                    const dz = dropTarget.closest('.dropzone');
+                    if(dz) {
+                        validDrop = dropCallback(el, dz);
+                    }
+                }
+
+                if(!validDrop) {
+                    // Kembali ke asal
+                    el.style.position = 'static';
+                    el.style.zIndex = '50';
+                    el.style.transform = 'none';
+                    el.style.width = 'auto';
+                    if(clone) {
+                        clone.parentNode.insertBefore(el, clone);
+                        clone.remove();
+                    }
+                    playSound('wrong');
+                } else {
+                    if(clone) clone.remove();
+                }
+            }
+
+            function moveEl(x, y) {
+                el.style.left = x + 'px';
+                el.style.top = y + 'px';
+            }
+
+            el.addEventListener('mousedown', down);
+            el.addEventListener('touchstart', down, {passive: false});
+        }
+
+        function checkSortDrop(el, dz) {
+            const expectedType = dz.dataset.accept;
+            if(!expectedType) return false;
+
+            if(el.dataset.type === expectedType) {
+                // Benar
+                playSound('correct');
+                el.style.position = 'static';
+                el.style.transform = 'none';
+                el.style.margin = '5px';
+                el.style.background = '#fff';
+                el.style.color = 'var(--text-dark)';
+                // hapus event listener bawaan
+                let newEl = el.cloneNode(true);
+                dz.appendChild(newEl);
+                el.remove();
+                
+                updateScoreDisplay('score2', 10);
+                g2SortCount++;
+
+                if(g2SortCount === g2Items.length) {
+                    setTimeout(initGame2Part2, 500);
+                }
+                return true;
+            }
+            return false;
+        }
+
+        function initGame2Part2() {
+            playSound('win');
+            document.getElementById('game2-part2').style.display = 'block';
+            const source = document.getElementById('order-source');
+            source.innerHTML = '';
+
+            g2OrderItems.forEach(item => {
+                let el = document.createElement('div');
+                el.className = 'draggable';
+                el.innerText = item.text;
+                el.dataset.orderid = item.id;
+                makeDraggable(el, checkOrderDrop);
+                source.appendChild(el);
+            });
+        }
+
+        function checkOrderDrop(el, dz) {
+            const expectedOrder = dz.dataset.order;
+            if(!expectedOrder) return false;
+            
+            // Cek apakah dz sudah isi
+            if(dz.children.length > 0) return false;
+
+            if(el.dataset.orderid === expectedOrder) {
+                playSound('correct');
+                el.style.position = 'static';
+                el.style.transform = 'none';
+                el.style.width = '100%';
+                el.style.height = '100%';
+                el.style.margin = '0';
+                dz.appendChild(el);
+                dz.style.border = 'none';
+                dz.style.background = 'none';
+                
+                updateScoreDisplay('score2', 10);
+                g2OrderCount++;
+
+                if(g2OrderCount === g2OrderItems.length) {
+                    setTimeout(() => {
+                        playSound('win');
+                        alert(`Hebat! Rantai Makanan Selesai! Skor Total: ${currentGameScore}`);
+                        saveScore('Game 2: Drag & Drop');
+                        navTo('screen-score');
+                    }, 500);
+                }
+                return true;
+            }
+            return false;
+        }
+
+    </script>
+</body>
+</html>
